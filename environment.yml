@@ -1,0 +1,45 @@
+name: LPE_Build
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - git
+  - pip
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - xarray
+  - pyproj
+  - ipython
+  # --- Jupyter stack ---
+  - jupyterlab
+  - ipykernel
+  - ipywidgets
+  - nb_conda_kernels
+  # --- Convenience tools ---
+  - jupytext
+  - pip:
+      # Delft3D-FM pre/post-processing
+      - dfm_tools
+      # --- Calibration extras ---
+      - seaborn
+      - tqdm
+      - openpyxl
+      - pyyaml
+      - hydroeval
+      # --- Hydromet inputs ---
+      - cmocean
+      - dataretrieval
+      - noaa-coops
+      - pvlib
+      - gsw
+      - dorado
+      - contextily
+      - xugrid
+      - hydrolib-core
+      # --- ERA5 download and processing ---
+      - cdsapi
+      - cfgrib
+      - eccodes
+      - cftime           # robust ERA5 time coordinate handling

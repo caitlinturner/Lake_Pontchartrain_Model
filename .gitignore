@@ -1,0 +1,26 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Local environment files
+.env
+.env.*
+
+# GitHub size-limit exclusions
+outputs/dorado/2014_01/WalkData_2014_01.txt
+outputs/dorado/2014_01/unstructured_model_Delft3DFM_2014_01.txt
