@@ -297,6 +297,10 @@ def validate_variable(
         label = station["label"]
         print(f"\n{label}")
         
+        # Fetchers return a single-column frame named after the variable
+        # ("wl", "sal", or "temp"), so we can recover the column name from
+        # variable_type without re-calling the fetcher on failure.
+        obs_col = variable_type
         try:
             obs = station["fetcher"]()
             obs_col = list(obs.columns)[0]  # First column name
@@ -304,7 +308,6 @@ def validate_variable(
             print(f"  fetched obs: {n_ok} raw values")
         except Exception as err:
             print(f"  [error] obs fetch failed: {type(err).__name__}: {err}")
-            obs_col = list(station["fetcher"]().columns)[0]
             obs = pd.DataFrame({obs_col: pd.Series(dtype=float)})
 
         model_col = station["model_col"]

@@ -47,7 +47,7 @@ DFM_OUT_ROOT = Path("outputs/dfm_forcings")
 DFM_REF_DATE = pd.Timestamp("2001-01-01")
 DFM_FILES: dict = {}
 RIVER_SALINITY_PPT = 0.2
-RIVER_TEMP_SMOOTH_HOURS = 24 * 21  # 2 Weeks
+RIVER_TEMP_SMOOTH_HOURS = 24 * 21  # deprecated: river temp smoothing now handled in air_to_river_temp
 OCEAN_TEMP_SMOOTH_HOURS = 24 * 7   # 1 Week
 
 spillway_by_year: dict[int, pd.DataFrame] = {}
@@ -1499,7 +1499,11 @@ def write_dfm_year(year, d):
     if INCLUDE_TEMPERATURE:
         wt = d["WAT_T"].dropna(subset=["water_temp"]).sort_values("datetime")
         rt = d["RIVER_T"].dropna(subset=["river_temp"]).sort_values("datetime")
-        rt_vals = _smooth_temp_series(rt["datetime"], rt["river_temp"].values, RIVER_TEMP_SMOOTH_HOURS)
+        # River temperature is already smoothed during derivation
+        # (air_to_river_temp applies RIVER_TEMP_CONFIG["smooth_days"]), so it is
+        # NOT smoothed again here — that would double-smooth the same signal.
+        # Control river-temp smoothing from the notebook config instead.
+        rt_vals = rt["river_temp"].to_numpy(dtype=float)
         wt_vals = _smooth_temp_series(wt["datetime"], wt["water_temp"].values, OCEAN_TEMP_SMOOTH_HOURS)
         temp_blocks = []
         for t in RIVERS_INFO:

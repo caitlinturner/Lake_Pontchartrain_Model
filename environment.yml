@@ -1,4 +1,4 @@
-name: LPE_Build
+name: Lake_Pontchartrain_Model
 channels:
   - conda-forge
 dependencies:
@@ -22,7 +22,6 @@ dependencies:
   - pip:
       # Delft3D-FM pre/post-processing
       - dfm_tools
-      # --- Calibration extras ---
       - seaborn
       - tqdm
       - openpyxl
@@ -42,4 +41,4 @@ dependencies:
       - cdsapi
       - cfgrib
       - eccodes
-      - cftime           # robust ERA5 time coordinate handling
+      - cftime          

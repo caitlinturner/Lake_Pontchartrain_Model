@@ -22,5 +22,5 @@ env/
 .env.*
 
 # GitHub size-limit exclusions
-outputs/dorado/2014_01/WalkData_2014_01.txt
-outputs/dorado/2014_01/unstructured_model_Delft3DFM_2014_01.txt
+# Dorado model outputs are large local artifacts and are not pushed
+outputs/dorado/
