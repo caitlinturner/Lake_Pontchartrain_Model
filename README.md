@@ -10,7 +10,7 @@ Everything *around* the model run lives here.
 
 ## Workflow
 
-1. **SETUP** – build the model's input files (boundary forcing + spillway flow).
+1. **SETUP**: build the model's input files (boundary forcing + spillway flow).
 2. **Run Delft3D-FM**: done externally in the Delft3D-FM.
 3. **REVIEW**: validate, visualize 
 4. **DORADO**: run particle exposure-time analysis on the model results.
@@ -88,6 +88,9 @@ QA Excel tables in `outputs/tables/` and a station-location map.
    `QUANTITY = humidity_airtemperature_cloudiness` in `FlowFM.ext`.)
 3. Run the model. It produces `FlowFM_his.nc` (values at station points) and
    `FlowFM_map.nc` (the full 2D field over time).
+4. In Delft3D, you will need to change the timeframe in 4 places. You need to change the
+   the model timing in the general tab (Start Time and End Time), and in the outputs tab 
+   update the start time and end time for all three outputs. 
 
 ### Stage 3: REVIEW + DORADO: analyze the results
 
