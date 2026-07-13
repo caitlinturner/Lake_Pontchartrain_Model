@@ -1,33 +1,28 @@
 # Lake Pontchartrain Hydrodynamic Modeling Workflow
 
-This repository builds and evaluates a **Delft3D-FM** hydrodynamic model of
-**Lake Pontchartrain, Louisiana**. It covers the whole pipeline: pulling the
-weather and river data the model needs, writing the boundary files, checking the
-model against real observations, looking at the 2D results, and finally running
-`dorado` particle tracking to see how long water (or anything moving with it)
-stays in the system.
+This repo builds and evaluates the **Delft3D-FM** hydrodynamic model of
+**Lake Pontchartrain, Louisiana**. It pulls the model forcing data, 
+writes the boundary files, validates the model, reviews 2d results and makes movies,
+and connects the model to `dorado` particle tracking.
 
-The model itself runs **outside** this repo in the Delft3D-FM software. What
-lives here is everything *around* the model run: the inputs that go in, and the
-analysis that comes out.
+The model itself runs **outside** this repo in the Delft3D-FM software. 
+Everything *around* the model run lives here.
 
-## The Big Picture
-
-Everything happens in three stages, in this order:
+## Workflow
 
 1. **SETUP** – build the model's input files (boundary forcing + spillway flow).
-2. **Run Delft3D-FM** – done externally in the Delft3D-FM software, not here.
-3. **REVIEW + DORADO** – validate, visualize, and run particle exposure-time
-   analysis on the model results.
+2. **Run Delft3D-FM**: done externally in the Delft3D-FM.
+3. **REVIEW**: validate, visualize 
+4. **DORADO**: run particle exposure-time analysis on the model results.
 
-Here is how the pieces feed into each other:
+
 
 ```
                  ┌─────────────────────────────┐
  USACE stage /   │ SETUP-01a  (BCS discharge)  │
  opening records │  → outputs/bcs/…discharge.csv│
                  └──────────────┬──────────────┘
-                                │  (spillway flow: a → number)
+                                │  
  NOAA + USGS +   ┌──────────────▼──────────────┐
  Open-Meteo data │ SETUP-01  (all forcing)      │
                  │  → outputs/dfm_forcings/<yr>/ │
@@ -44,27 +39,17 @@ Here is how the pieces feed into each other:
               │ at sites   │ │ movie/share│  │
               └────────────┘ └────────────┘  │
              ┌──────────────────────────────▼───────────────────────┐
-             │ DORADO — particle exposure time (from model results) │
+             │ DORADO: particle exposure time (from model results) │
              │   DORADO-01 → DORADO-02   whole-system, then spatial │
              │   DORADO-03a → DORADO-03 → DORADO-04   spillway path │
              │   DORADO-05 → DORADO-04   multisource → from_source  │
              └──────────────────────────────────────────────────────┘
 ```
 
-## What You Need Before Starting
-
-1. **The conda environment** (see [Environment Setup](#environment-setup-windows)).
-2. **Delft3D-FM model output** for the years you care about. `REVIEW-*` and the
-   `DORADO-*` notebooks read the model's `FlowFM_his.nc` (station time series)
-   and `FlowFM_map.nc` (full 2D map) files. The path to these is set near the top
-   of each notebook — **update it to point at your machine**.
-3. **External data files** in `data/external/` for the spillway calculation
-   (USACE stage text file and the opening-events spreadsheet). Everything else
-   (NOAA, USGS, Open-Meteo) is downloaded live when the notebooks run.
 
 ## Step-by-Step Workflow
 
-### Stage 1 — SETUP: build the model inputs
+### Stage 1: SETUP: build the model inputs
 
 **1a. Spillway flow first.** Run
 `notebooks/SETUP-01a-bcs_diversion_leakage_updated.ipynb`. This figures out how
@@ -76,6 +61,8 @@ two parts:
   USACE records (these always win over the leakage estimate).
 
 It saves a discharge CSV to `outputs/bcs/`, which the next notebook reads.
+
+You only need to do this if you are running July 1, 2026 or after.
 
 **1b. All the other forcing.** Run
 `notebooks/SETUP-01-create_hydromet_model_inputs.ipynb`. This pulls everything
@@ -90,19 +77,19 @@ the model needs for each year and writes it out in Delft3D-FM format:
 Output goes to `outputs/dfm_forcings/<year>/` as `.bc` and `.tim` files, plus
 QA Excel tables in `outputs/tables/` and a station-location map.
 
-### Stage 2 — Run Delft3D-FM (external)
+### Stage 2: Run Delft3D-FM (external)
 
 1. Copy the new `.bc` and `.tim` files from `outputs/dfm_forcings/<year>/` into
    your Delft3D-FM model folder (the same folder as `FlowFM.mdu`). They keep the
    same names, so they overwrite the old versions.
-2. You usually **don't** need to edit `FlowFM.ext` / `FlowFM_bnd.ext` — those
+2. You usually **don't** need to edit `FlowFM.ext` / `FlowFM_bnd.ext`: those
    point at file *names*, and the names still match. (The one exception is if you
    are turning on composite temperature; then add `_solarradiation` to the end of
-   the relevant `QUANTITY` in `FlowFM.ext`.)
+   `QUANTITY = humidity_airtemperature_cloudiness` in `FlowFM.ext`.)
 3. Run the model. It produces `FlowFM_his.nc` (values at station points) and
    `FlowFM_map.nc` (the full 2D field over time).
 
-### Stage 3 — REVIEW + DORADO: analyze the results
+### Stage 3: REVIEW + DORADO: analyze the results
 
 **Validate** with `REVIEW-01`, **look at the 2D fields** with `REVIEW-02`, then
 run the **DORADO** particle notebooks (see the guide below for the order).
@@ -122,7 +109,7 @@ Notebooks are named by stage and are meant to run roughly top to bottom.
   - *Reads:* USACE stage + opening records from `data/external/`. *Writes:* the
     BCS leakage/discharge CSV in `outputs/bcs/`.
   - To update it: add new stage rows to the USACE text file, and if the spillway
-    opened, add a column to the opening spreadsheet — then Run All.
+    opened, add a column to the opening spreadsheet: then Run All.
 
 ### REVIEW
 - **`REVIEW-01-validation_at_sites.ipynb`**
@@ -141,27 +128,28 @@ Run these in roughly this order; later ones reuse `walk_data` saved by earlier
 ones.
 - **`DORADO-01-unstructured_grid_exposuretime.ipynb`**
   - Turns the unstructured Delft3D-FM output into a regular grid, seeds particles
-    across the lake (a random 10% of eligible cells), runs the particle routing,
+    randomly across the lake, runs the particle routing,
     and computes **whole-system exposure time**. Saves `walk_data` and a rasterized
-    `.npz` of model variables. A fixed `RANDOM_SEED` makes the particle sample
-    reproducible.
+    `.npz` of model variables. The `RANDOM_SEED` makes the particle sample
+    reproduciblee.
 - **`DORADO-02-spatial_exposuretime.ipynb`**
-  - *Reads:* the `walk_data` from DORADO-01. Maps exposure time in 2D (whole
-    domain, per-chunk, and localized).
+  - *Reads:* the `walk_data` from DORADO-01. Maps exposure time in 2D.
+  	We get system-wide and localized exposure time from this. This notebook
+	matches the one in the dorado package. 
 - **`DORADO-03a-create_spillway_particles_selected_years.ipynb`**
   - Turns the BCS discharge CSV into a **daily particle-release schedule** (one
     CSV per selected year) using smoothing and a scale factor.
 - **`DORADO-03-spillway_release_workflow.ipynb`**
-  - *Reads:* a spillway particle CSV from DORADO-03a. Releases particles from a
+  - *Reads:* the spillway particle CSV from DORADO-03a. Releases particles from a
     fixed spillway line on that daily schedule and tracks them to get exposure
     time for a spillway event. Saves `walk_data`.
 - **`DORADO-04-from_source_exposuretime.ipynb`**
-  - *Reads:* `walk_data` from a source release — either the spillway run above or
-    the multisource run below. Computes **per-area (chunked) exposure time** for
-    that source using `from_source_exposure()`.
+  - *Reads:* `walk_data` from a source release: either the spillway run above or
+    the multisource run below. Computes **exposure time** of particles origionating 
+	from a source. This is similar to nourishment for that source using `from_source_exposure()`.
 - **`DORADO-05-multisource_release_workflow.ipynb`**
   - The generalized version of DORADO-03: release particles from **any number of
-    named sources** (a spillway plus tributaries, etc.), each with its own
+    named sources** (new orleans canals, spillway, the causeway, tributaries, etc.), each with its own
     location and schedule. Saves the combined `walk_data`, which DORADO-04 reads.
 
 > Heads up: both the spillway path (`DORADO-03a → 03 → 04`) and the multisource
@@ -170,13 +158,13 @@ ones.
 
 ## Where the Data Comes From
 
-- **NOAA CO-OPS** (tidesandcurrents.noaa.gov) — water level, wind, air pressure,
+- **NOAA CO-OPS** (tidesandcurrents.noaa.gov): water level, wind, air pressure,
   and water temperature at coastal stations.
-- **USGS NWIS** (waterdata.usgs.gov) — tributary discharge, gauge height,
+- **USGS NWIS** (waterdata.usgs.gov): tributary discharge, gauge height,
   salinity, and water temperature.
-- **Open-Meteo ERA5** (open-meteo.com) — air temperature, humidity, cloud cover,
+- **Open-Meteo ERA5** (open-meteo.com): air temperature, humidity, cloud cover,
   solar radiation, wind, and pressure at a grid point.
-- **USACE** (rivergages.mvr.usace.army.mil) — Bonnet Carré river stage and the
+- **USACE** (rivergages.mvr.usace.army.mil): Bonnet Carré river stage and the
   recorded spillway opening events.
 
 NOAA, USGS, and Open-Meteo are downloaded automatically when the notebooks run.
@@ -186,15 +174,15 @@ The USACE files are downloaded by hand and dropped into `data/external/`.
 
 The notebooks stay focused on the workflow; the reusable code lives in `src/`.
 
-- **`src/hydromet_functions.py`** — builds and smooths the forcing series and
-  writes the Delft3D-FM boundary files (discharge/water level `.bc`, wind and
+- **`src/hydromet_functions.py`**: builds the forcing series and
+  writes Delft3D-FM boundary files (discharge/water level `.bc`, wind and
   pressure `.tim`, temperature/salinity `.bc`, and the composite meteo `.tim`).
-- **`src/validation_functions.py`** — downloads observations (NOAA CO-OPS, USGS
+- **`src/validation_functions.py`**: downloads observations (NOAA CO-OPS, USGS
   NWIS), preprocesses them, and runs the `validate_variable()` model-vs-obs
   comparison used by `REVIEW-01`.
-- **`src/figures.py`** — plotting helpers (tributary discharge, meteorology,
+- **`src/figures.py`**: plotting helpers (tributary discharge, meteorology,
   ERA5 panels, and the multi-variable summary grid).
-- **`src/dorado_utils.py`** — shared DORADO helpers: `from_source_exposure()`,
+- **`src/dorado_utils.py`**: shared DORADO helpers: `from_source_exposure()`,
   `build_daily_series()`, `resolve_seed_cells()`, and `daily_to_steps()`.
 
 ## Environment Setup (Windows)
@@ -207,8 +195,8 @@ conda env create -f environment.yml
 conda activate Lake_Pontchartrain_Model
 ```
 
-Optional: register the environment as a Jupyter kernel so you can pick it inside
-the notebooks.
+Register the environment as a Jupyter kernel so you can select the enivronment
+in the notebooks (basically you can open the VS Code app and it will run).
 
 ```bat
 python -m ipykernel install --user --name Lake_Pontchartrain_Model --display-name "Python (Lake_Pontchartrain_Model)"
@@ -222,11 +210,11 @@ so that `src/` can be imported.
 
 - **Model output paths.** `REVIEW-01`, `REVIEW-02`, `DORADO-01`, `DORADO-02`, and
   `DORADO-03` each have a hardcoded path near the top pointing at a local
-  Delft3D-FM output folder. Change it to match your machine before running.
+  Delft3D-FM output folder. Change it to match your machine before running if not on lab computer.
 - **Years / run identifiers.** Most notebooks have a `model_run`, `YEARS`, or
-  `SELECTED_YEARS` setting near the top — set these to the run you are working on.
+  `SELECTED_YEARS` setting near the top: set these to the run you are working on.
 - **Network hiccups.** The live NOAA/USGS/Open-Meteo pulls occasionally time out.
-  If a cell fails with a connection error, just re-run that cell.
+  If a cell fails with a connection error, just re-run that cell. 
 
 ## Directory Structure
 
@@ -245,8 +233,7 @@ src/                      reusable Python modules
 ## Notes
 
 - This workflow makes some large binary/text outputs (NetCDF, particle
-  `walk_data`, animations). Not all of them are meant to live on GitHub — keep
-  the big ones local or share them another way.
+  `walk_data`, animations) and may take a while to run. 
 
 
 
